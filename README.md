@@ -1,3 +1,15 @@
+# React-data
+
+This project was about building my second **React app**.
+
+I created an image carousel using some API endpoints from another personal project (https://silver-le-maine-coon.herokuapp.com/)
+
+Deployed and hosted version available here: [https://julien-b-py.github.io/react-data/](https://julien-b-py.github.io/react-data/)
+
+
+
+
+
 # Getting Started with Create React App
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
