@@ -8,6 +8,8 @@ function App() {
   const [error, setError] = useState(null);
   const [isLoaded, setIsLoaded] = useState(false);
   const [pictures, setPictures] = useState([]);
+  const [quotes, setQuotes] = useState([]);
+  const [randomQuote, setRandomQuote] = useState(0);
   const [currentPic, setCurrentPic] = useState(0);
   const [direction, setDirection] = useState("");
 
@@ -15,30 +17,39 @@ function App() {
 
   // Only runs after first render
   useEffect(() => {
-    fetch("https://silver-le-maine-coon.herokuapp.com/api/photos")
-      .then((res) => res.json())
-      .then(
-        (result) => {
-          setIsLoaded(true);
-          setPictures(result);
-        },
+    let photos = fetch("https://silver-le-maine-coon.herokuapp.com/api/photos");
+    let quotes = fetch("https://silver-le-maine-coon.herokuapp.com/api/quotes");
 
-        (error) => {
-          setIsLoaded(true);
-          setError(error);
-        }
-      );
-    // .then(() => {
-    //   scaleInPicture();
-    // });
+    Promise.all([photos, quotes])
+      .then(function (responses) {
+        // Get a JSON object from each of the responses
+        return Promise.all(
+          responses.map(function (response) {
+            return response.json();
+          })
+        );
+      })
+      .then(function (data) {
+        setPictures(data[0]);
+        setQuotes(data[1]);
+        selectRandomQuote(data[1]);
+
+        setIsLoaded(true);
+      })
+      .catch(function (error) {
+        // if there's an error
+
+        setError(error);
+        setIsLoaded(true);
+      });
   }, []);
 
-  // Runs after first render every time `currentPic` changes if isLoaded.
-  // useEffect(() => {
-  //   if (isLoaded) {
-  //     scaleInPicture();
-  //   }
-  // }, [currentPic]);
+  function selectRandomQuote(array) {
+    const minIndex = 0;
+    const maxIndex = array.length;
+    const randomIndex = Math.floor(Math.random() * maxIndex);
+    setRandomQuote(randomIndex);
+  }
 
   function scaleInPicture() {
     // gsap.from(pictureRef.current, { scale: 0 });
@@ -48,24 +59,23 @@ function App() {
       : gsap.from(pictureRef.current, { x: "50%", autoAlpha: 0 });
   }
 
-  function getPrevPicture() {
-    setCurrentPic((previousValue) => previousValue - 1);
-    setDirection("left");
-  }
-
-  function getNextPicture() {
-    setCurrentPic((previousValue) => previousValue + 1);
-    setDirection("right");
+  function changePicture(dir) {
+    dir === "left"
+      ? setCurrentPic((previousValue) => previousValue - 1)
+      : setCurrentPic((previousValue) => previousValue + 1);
+    setDirection(dir);
+    selectRandomQuote(quotes);
   }
 
   if (error) {
-    return <div>Erreur : {error.message}</div>;
+    return <div className="center-content">Erreur : {error.message}</div>;
   } else if (!isLoaded) {
-    return <div>Chargement...</div>;
+    return <div className="center-content">Chargement...</div>;
   } else {
     return (
       <div className="page">
         <div className="content">
+          <h1>Silver</h1>
           <div className="picture">
             <img
               src={pictures[currentPic]}
@@ -74,15 +84,22 @@ function App() {
             />
             <div className="nav-buttons">
               {currentPic != 0 && (
-                <NavButton direction="left" onPictureChange={getPrevPicture} />
+                <NavButton direction="left" onPictureChange={changePicture} />
               )}
               {currentPic != pictures.length - 1 && (
-                <NavButton direction="right" onPictureChange={getNextPicture} />
+                <NavButton direction="right" onPictureChange={changePicture} />
               )}
             </div>
           </div>
+
+          <div>
+            <p>{"Photo " + (currentPic + 1) + "/" + pictures.length}</p>
+          </div>
         </div>
-        <Footer quote="quote" author="author" />
+        <Footer
+          quote={quotes[randomQuote].text}
+          author={quotes[randomQuote].author}
+        />
       </div>
     );
   }
